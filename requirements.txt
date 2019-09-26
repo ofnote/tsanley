@@ -1,0 +1,5 @@
+# requirements.txt
+#
+# delegates dependencies to ./setup.py,
+# run `pip install -e .` to install in editable mode
+.
