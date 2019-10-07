@@ -10,7 +10,7 @@ tensor_classes = {
     'torch': ['torch.Tensor', 'torch.nn.parameter.Parameter', 'torch.nn.modules.sparse.Embedding']
 }
 
-def is_tensor(x):
+def is_tensor(x, debug):
     t = get_str_type(x)
 
     if 'numpy.' in t: ret = ('numpy.ndarray' in t)
@@ -19,16 +19,17 @@ def is_tensor(x):
     elif 'tensorflow.' in t: ret = ('ops.Tensor' in t)
     else: ret = False
 
-    if not ret: 
+    if debug and not ret: 
         log (f'shape_cache: Not is_tensor: {t}', style='red')
 
     return ret
 
 class ShapeCache:
-    def __init__ (self, backend):
+    def __init__ (self, debug, backend):
         self.var2shape = defaultdict(dict)
         self.func2ann = defaultdict(dict) # forward -> {lineno: shape}
         self.sz2name = None
+        self.debug = debug
 
         self.BE = get_backend_by_name(backend)
 
@@ -40,25 +41,25 @@ class ShapeCache:
     def get_shape(self, val):
         self.make_decl_map()
         shape = self.BE.shape(val)
-        shape_ann = [self.sz2name[s] if s in self.sz2name else str(s) for s in shape]
-        return shape, ','.join(shape_ann)
+        actual_shape_ann = [self.sz2name[s] if s in self.sz2name else str(s) for s in shape]
+        return shape, ','.join(actual_shape_ann)
 
     def update_var_shape(self, v, val, func_name, filename, lineno, show=False):
-        if not is_tensor(val): return None
+        if not is_tensor(val, self.debug): return None
 
         #print ('update_var_shape', type(val))
         if not isinstance(val, (list, tuple) ):
-            shape, shape_ann = self.get_shape(val)
+            shape, actual_shape_ann = self.get_shape(val)
         else:
             lenv = len(val)
-            shape, shape_ann = self.get_shape(val[0])
+            shape, actual_shape_ann = self.get_shape(val[0])
             shape = (lenv, shape)
-            shape_ann = (lenv, shape_ann)
+            actual_shape_ann = (lenv, actual_shape_ann)
 
         self.var2shape[func_name][v] = shape
-        self.func2ann[func_name+','+filename][lineno] = (shape_ann, v)
+        self.func2ann[func_name+','+filename][lineno] = (actual_shape_ann, v)
         if show:
-            log(f'update at line {lineno}: shape of {v} = {shape_ann}')
+            log(f'\nUpdate at line {lineno}: actual shape of {v} = {actual_shape_ann}')
         return shape
 
     def shape_check (self, v, shape_ann, func_name, lineno, verbose=True):

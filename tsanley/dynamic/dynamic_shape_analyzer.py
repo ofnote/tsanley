@@ -120,54 +120,93 @@ def get_var_shape (var, frame):
 
     return var_shape
 
+
+
+def analyze_stmt (last_exec_stmt, line_no, func_name, filename, frame, trb):
+    debug = GLOBALS.debug
+    check_tsa = GLOBALS.check_tsa
+    shape_cache = GLOBALS.shape_cache
+
+    var, ann = get_var_ann_from_stmt(last_exec_stmt, frame)
+    #the current shape of x (named var) corresponds to post-execution of prev statement
+    # so we can check prev stmt's ann against x's shape
+    if debug: log (f'>> var, ann : {var}, {ann}')
+
+    if var is not None:
+        debug_log (f'\n({func_name}:{line_no}), var={var}', trb.index, level=DEBUG_LEVEL)
+        #print (frame.f_locals)
+
+        var_shape = get_var_shape(var, frame)
+        shape_cache.update_var_shape(var, var_shape, func_name, filename, line_no, 
+                        show=GLOBALS.show_updates)
+        
+        if ann is not None and check_tsa:
+            shape_cache.shape_check(var, ann, func_name, line_no)
+
+def get_earlier_exec_stmts (last_exec_line, curr_line, frame):
+    global GLOBALS
+    debug = GLOBALS.debug
+
+    co_src = inspect.getsourcelines(frame.f_code)
+    stmt_list, first_line = co_src
+
+    curr_idx = (curr_line - first_line) 
+    if last_exec_line is None: 
+        last_exec_line = curr_line - 1
+    last_idx = (last_exec_line - first_line)
+    earlier_stmts = [(first_line + i, stmt_list[i]) for i in range(last_idx, curr_idx)]
+
+    if debug:
+        log (last_exec_line, curr_line, last_idx, curr_idx, earlier_stmts, style='bold')
+    return earlier_stmts
+
 def trace_lines(frame, event, arg):
     global GLOBALS
+    debug = GLOBALS.debug
     shape_cache = GLOBALS.shape_cache
-    check_tsa = GLOBALS.check_tsa
-    show_updates = GLOBALS.show_updates
 
-    #print (f'--> tracelines: event = {event}')
-    if event == 'line': context_pos = 0
-    elif event == 'return': context_pos = -1
+    if debug:
+        print (f'\n==> tracelines: event = {event}')
+    
+    if event == 'line': 
+        context_pos = 0
+    elif event == 'return': 
+        context_pos = -1
+
     else:
         raise NotImplementedError(f'trace_lines: unknown event {event}')
 
     #co = frame.f_code
     #func_name = co.co_name
     #print ('varnames: ', co.co_varnames, co.co_freevars)
-    #co_src = inspect.getsourcelines(co)
+    co_src = inspect.getsourcelines(frame.f_code)
 
     filename = frame.f_code.co_filename
-    line_no = frame.f_lineno
-    curr_line = line_no - 1 - context_pos
-
+    #curr_line = curr_line - 1 - context_pos
+    curr_line = frame.f_lineno
     func_name = get_function_name_from_frame(frame)
 
-    debug_log (f'trace_lines: function "{func_name}", line {line_no}', level=DEBUG_LEVEL)
+    if debug:
+        log (f'trace_lines: function "{func_name}", executing line {curr_line}')
+        log(f'code {co_src[0]}')
 
-
-    trb = inspect.getframeinfo(frame, context=2)
-    code_context = trb.code_context
+    trb = inspect.getframeinfo(frame, context=1)
+    #print (trb)
+    #code_context = trb.code_context
     #curr_line = code_context[trb.index]
     #print ('globals: ', frame.f_globals )
 
-    var, ann = get_var_ann_from_stmt(code_context[context_pos], frame)
-    #the current shape of x (named var) corresponds to post-execution of prev statement
-    # so we can check prev stmt's ann against x's shape
-    #print (f'var, ann : {var}, {ann}')
-    if var is not None:
-        debug_log (f'\n({func_name}:{curr_line}), var={var}', code_context, trb.index, level=DEBUG_LEVEL)
-        #print (frame.f_locals)
+    if event == 'return': curr_line += 1 #allow tracking the last line before return
 
-        var_shape = get_var_shape(var, frame)
-        shape_cache.update_var_shape(var, var_shape, func_name, filename, curr_line, show=show_updates)
-        
-        if ann is not None and check_tsa:
-            shape_cache.shape_check(var, ann, func_name, curr_line)
+    stmts = get_earlier_exec_stmts (GLOBALS.last_exec_line, curr_line, frame)
+    for stmt_line, stmt in stmts:
+        analyze_stmt (stmt, stmt_line, func_name, filename, frame, trb)
 
+    GLOBALS.last_exec_line = curr_line
 
     if event == 'return':
         shape_cache.save('/tmp/shape_log.json')
+        GLOBALS.last_exec_line = None # function returns, so stop keeping track
 
     if event != 'line':
         #print (f'tracelines: event = {event}')
@@ -201,11 +240,11 @@ def trace_calls(frame, event, arg):
         #if func_name in TRACE_INTO:
         #    debug_log (f'> trying {func_name}, {co.co_filename}')
 
-        line_no = frame.f_lineno
+        curr_line = frame.f_lineno
         filename = co.co_filename
         if should_filter_call(filename, func_name): return 
 
-        debug_log (f'>> call to {func_name} on line {line_no} of {filename}: {func_name}, {TRACE_INTO}')
+        debug_log (f'>> call to {func_name} on line {curr_line} of {filename}: {func_name}, {TRACE_INTO}')
 
         matched = False
         if len(TRACE_INTO) == 0: matched = True
@@ -215,6 +254,7 @@ def trace_calls(frame, event, arg):
         if matched:
             # Trace into this function
             log(f'\n> Analyzing function {func_name}')
+            GLOBALS.last_exec_line = None #TODO: push curr_line on stack
             return trace_lines
         #return trace_calls
     elif event == 'return':
@@ -227,10 +267,11 @@ def trace_calls(frame, event, arg):
 def init_analyzer(trace_func_names=['main'], check_tsa=True, show_updates=True, debug=False, backend='pytorch'):
     global GLOBALS
     GLOBALS.debug = debug
-    GLOBALS.shape_cache = ShapeCache(backend)
+    GLOBALS.shape_cache = ShapeCache(debug, backend)
     GLOBALS.trace_into = trace_func_names
     GLOBALS.check_tsa = check_tsa
     GLOBALS.show_updates = show_updates
+    GLOBALS.last_exec_line = None
 
     #global SIZE2NAME
     #assert False

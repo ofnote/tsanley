@@ -12,7 +12,8 @@ class bcolors:
 colmap = {
     'green': bcolors.OKGREEN,
     'blue': bcolors.OKBLUE,
-    'red': bcolors.FAIL
+    'red': bcolors.FAIL,
+    'bold': bcolors.BOLD
 }
 def debug_log (*s, level=0):
     if level >=2: log (*s, style=bcolors.BOLD)
