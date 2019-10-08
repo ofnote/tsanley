@@ -13,44 +13,37 @@ More details on the shorthand format [here](https://github.com/ofnote/tsalib/blo
 
 #### Example
 
-Suppose we have the following functions `foo` and `test_foo` in our existing code. To setup `tsanley`, we add the following code *before* `test_foo` is called (in the `test` function):
+Suppose we have the following functions `foo` and `test_foo` in our existing code. To setup `tsanley` analyzer for shape checking in `foo`, we add a function `setup_named_dims` *before* calling `test_foo`, label tensor variables by their expected shorthand shapes (e.g., `b,d`) and then execute the code normally.
 
-- Declare the named dimension variables (using `dim_vars`) -- these help specify the expected shape of tensor variables used in the code. For example, here we declare 3 dimension variables, referred to via shorthand names `b`, `t`, `d`. We use these shorthand names to label variables and check their shapes in one or more functions, e.g., `foo` here.
-- Initialize the `tsanley` analyzer by calling `init_analyzer`: parameter `trace_func_names` takes a list of function names as Unix shell-style wildcards (using the `fnmatch` library).
 
 ```python
 def foo(x):
-    x: 'b,t,d' #shape check: ok!              [line 36]
-    y: 'b,d' = x.mean(dim=0) #error: dim should be 1  [line 37]
-    #   ^ 
-    #   | tsanley detects shape violation
-
+    x: 'b,t,d' #shape check: ok!               [line 36]
+    y: 'b,d' = x.mean(dim=0)  # error!         [line 37]
     z: 'b,d' = x.mean(dim=1) #shape check: ok! [line 38]
 
 def test_foo():
     import torch
-    from tsalib import get_dim_vars
-
-    # get the declared dimension sizes: 10, 100, 1024
-    B, L, D = get_dim_vars('b t d') 
-    x = torch.Tensor(B, L, D)
+    x = torch.Tensor(10, 100, 1024)
     foo(x)
 
-def test():
-    #declare the named dimension variables using the tsalib api
+def setup_named_dims():
     from tsalib import dim_vars
+    #declare the named dimension variables using the tsalib api
+    #e.g., 'b' stands for 'Batch' dimension with size 10
     dim_vars('Batch(b):10 Length(t):100 Hidden(d):1024')
 
     # initialize tsanley's dynamic shape analyzer
     from tsanley.dynamic import init_analyzer
     init_analyzer(trace_func_names=['foo'], show_updates=True) #check_tsa=True, debug=False
 
-    test_foo()
 
-if __name__ == '__main__': test()
+if __name__ == '__main__': 
+    setup_named_dims()
+    test_foo()
 ```
 
-On executing the above program, `tsanley` tracks shapes of tensor variables (`x`, `y`, `z`) in function `foo` and reports shape check successes and failures.
+On executing the above program, `tsanley` tracks shapes of tensor variables (`x`, `y`, `z`) in function `foo` and reports following shape check results.
 
 #### Output
 
@@ -69,6 +62,11 @@ Update at line 38: actual shape of z = b,d
 saving shapes to /tmp/shape_log.json ..
 ```
 
+#### What does setup_named_dims do?
+
+- Declare the named dimension variables (using `dim_vars`) -- using them we can specify the expected shape of tensor variables in the code. For example, here we declare 3 dimension variables, `Batch`, `Length` and `Hidden`, and refer to them via shorthand names `b`,`t`, `d`. 
+- We use shorthand names to label tensor variables and check their shapes in one or more functions, e.g., `foo` here.
+- Initialize the `tsanley` analyzer by calling `init_analyzer`: parameter `trace_func_names` takes a list of function names as Unix shell-style wildcards (using the `fnmatch` library). We can specify names with wildcards, e.g., `Resnet.*` to track all functions in the `Resnet` class.
 
 See examples in [models](models/) directory.
 
