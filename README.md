@@ -1,4 +1,6 @@
 # tsanley
+![experimental](https://img.shields.io/badge/stability-experimental-orange.svg)
+
 A shape analyzer for tensor programs, using popular tensor libraries: `tensorflow`, `pytorch`, `numpy`, ...
 
 Builds upon a library [tsalib](https://github.com/ofnote/tsalib) for specifying, annotating and transforming tensor shapes using **named dimensions**.
