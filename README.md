@@ -13,7 +13,7 @@ More details on the shorthand format [here](https://github.com/ofnote/tsalib/blo
 
 #### Example
 
-Suppose we have the following functions `foo` and `test_foo` in our existing code. To setup `tsanley`, we add the following code *before* `test_foo` is called (`test` function):
+Suppose we have the following functions `foo` and `test_foo` in our existing code. To setup `tsanley`, we add the following code *before* `test_foo` is called (in the `test` function):
 
 - Declare the named dimension variables (using `dim_vars`) -- these help specify the expected shape of tensor variables used in the code. For example, here we declare 3 dimension variables, referred to via shorthand names `b`, `t`, `d`. We use these shorthand names to label variables and check their shapes in one or more functions, e.g., `foo` here.
 - Initialize the `tsanley` analyzer by calling `init_analyzer`: parameter `trace_func_names` takes a list of function names as Unix shell-style wildcards (using the `fnmatch` library).
