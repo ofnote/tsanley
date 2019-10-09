@@ -1,13 +1,13 @@
 # tsanley 
 ![experimental](https://img.shields.io/badge/stability-experimental-orange.svg)
 
-Tsanley is a shape analyzer for tensor programs, using popular tensor libraries: `tensorflow`, `pytorch`, `numpy`, ...
+Tsanley is a shape analyzer for tensor programs, using popular tensor libraries: `tensorflow`, `pytorch`, `numpy`. Plugs into your existing code seamlessly, with minimal changes.
 
 Builds upon the library [tsalib](https://github.com/ofnote/tsalib) for specifying, annotating and transforming tensor shapes using **named dimensions**.
 
 ### Quick Start
 
-`tsanley` discovers shape errors at runtime by checking the runtime tensor shapes with the user-specified shape annotations. Tensor shape annotations are specified in the `tsalib` shape shorthand notation, e.g., `x: 'btd'`.
+`tsanley` discovers shape errors at runtime by checking the runtime tensor shapes against the user-specified shape annotations. Tensor shape annotations are specified in the `tsalib` shape shorthand notation, e.g., `x: 'btd'`.
 
 More details on the shorthand format [here](https://github.com/ofnote/tsalib/blob/master/notebooks/shorthand.md).
 
@@ -80,7 +80,7 @@ pip install tsanley
 
 `tsanley` can also annotate tensor variables in existing *executable* code with shape labels. This is useful when trying to understand external open-source code or labeling one's own code.
 
-Suppose, we have an un-annotated code residing in file `model.py`.
+Suppose, we have some un-annotated code residing in file `model.py`.
 
 1. First, generate *shape logs* by adding `setup_named_dims` to the `model.py`.
 2. Execute `model.py`. The logs are stored in `/tmp/shape_log.json`.
@@ -118,7 +118,7 @@ if __name__ == '__main__':
     test_foo()
 ```
 
-This generates the shape logs in `/tmp/shape_log.json`. Because no annotations are there, no checks performed by `tsanley`.
+This generates the shape logs in `/tmp/shape_log.json`. Flag `check_tsa=False` ensures no shape checks are performed by `tsanley`.
 
 Now, annotate `foo` with the command:
 
@@ -132,7 +132,7 @@ def foo(x):
     z: 'b,d' = x.mean(dim=1) 
 ```
 
-`tsanley` makes smart guesses to map runtime shape values (`100`) to the shorthand (`t`). If we do not declare the dimension names using `dim_vars` in `setup_named_dims`, we get the following annotation:
+`tsanley` makes smart guesses to map runtime shape values (`100`) to the shorthand names (`t`). If we do not declare the dimension names using `dim_vars` in `setup_named_dims`, we get the following annotation:
 
 ```python
 def foo(x):

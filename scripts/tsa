@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ..annotate import AnnotatorConfig
+from tsanley.annotate import AnnotatorConfig
 
 def main(args):
     if args.sub_cmd == 'annotate':

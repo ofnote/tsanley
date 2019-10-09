@@ -9,7 +9,7 @@ def get_long_description():
         return f.read()
 
 setuptools.setup(name='tsanley',
-      version='0.1.1',
+      version='0.2.0',
       description="Tsanley: Understanding Tensor Programs",
       long_description=get_long_description(),
       long_description_content_type="text/markdown",
