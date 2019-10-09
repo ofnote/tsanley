@@ -87,7 +87,7 @@ Suppose, we have some un-annotated code residing in file `model.py`.
 2. Use the logs to annotate `test.py`.
 
 #### Example
-Let's revisit the earlier example, without our annotations. Suppose it resides in `model.py`.
+Let's revisit the earlier example, without our manual annotations. Suppose it resides in `model.py`.
 
 ```python
 def foo(x):

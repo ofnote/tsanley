@@ -41,9 +41,10 @@ def annotate(fname, outfname, line2shape, debug=False):
         print (line2shape)
 
     #treestr = astpretty.pformat(tree)
-    astpretty.pprint (tree)
+    #astpretty.pprint (tree)
     code = typed_astunparse.unparse(tree)
     #print (code)
+    print (f'Writing to annotated file {outfname}')
     with open(outfname, 'w') as f:
         f.write(code)
 
