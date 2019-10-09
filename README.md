@@ -1,9 +1,9 @@
-# tsanley
+# tsanley 
 ![experimental](https://img.shields.io/badge/stability-experimental-orange.svg)
 
-A shape analyzer for tensor programs, using popular tensor libraries: `tensorflow`, `pytorch`, `numpy`, ...
+Tsanley is a shape analyzer for tensor programs, using popular tensor libraries: `tensorflow`, `pytorch`, `numpy`, ...
 
-Builds upon a library [tsalib](https://github.com/ofnote/tsalib) for specifying, annotating and transforming tensor shapes using **named dimensions**.
+Builds upon the library [tsalib](https://github.com/ofnote/tsalib) for specifying, annotating and transforming tensor shapes using **named dimensions**.
 
 ### Quick Start
 
@@ -55,7 +55,7 @@ Update at line 36: actual shape of x = b,t,d
   
 Update at line 37: actual shape of y = t,d 
   >> FAILED shape check at line 37 
-  expected: (d:1024,), actual: (100, 1024) 
+  expected: (b:10, d:1024), actual: (100, 1024) 
   
 Update at line 38: actual shape of z = b,d 
   >> shape check succeeded at line 38 
@@ -76,11 +76,78 @@ See examples in [models](models/) directory.
 pip install tsanley
 ```
 
+### Annotation
+
+`tsanley` can also annotate tensor variables in existing *executable* code with shape labels. This is useful when trying to understand external open-source code or labeling one's own code.
+
+Suppose, we have an un-annotated code residing in file `model.py`.
+
+1. First, generate *shape logs* by adding `setup_named_dims` to the `model.py`.
+2. Execute `model.py`. The logs are stored in `/tmp/shape_log.json`.
+2. Use the logs to annotate `test.py`.
+
+#### Example
+Let's revisit the earlier example, without our annotations. Suppose it resides in `model.py`.
+
+```python
+def foo(x):
+    y = x.mean(dim=0) 
+    z = x.mean(dim=1) 
+
+def test_foo():
+    import torch
+    x = torch.Tensor(10, 100, 1024)
+    foo(x)
+```
+
+We add `setup_named_dims` to the code, and execute it.
+
+```python
+def setup_named_dims():
+    from tsalib import dim_vars
+    #declare the named dimension variables using the tsalib api
+    #e.g., 'b' stands for 'Batch' dimension with size 10
+    dim_vars('Batch(b):10 Length(t):100 Hidden(d):1024')
+
+    # initialize tsanley's dynamic shape analyzer
+    from tsanley.dynamic import init_analyzer
+    init_analyzer(trace_func_names=['foo'], show_updates=True, check_tsa=False) # debug=False
+
+if __name__ == '__main__': 
+    setup_named_dims()
+    test_foo()
+```
+
+This generates the shape logs in `/tmp/shape_log.json`. Because no annotations are there, no checks performed by `tsanley`.
+
+Now, annotate `foo` with the command:
+
+> tsa annotate -f model.py
+
+The output is a file `tsa_model.py` with `foo` updated as follows:
+
+```python
+def foo(x):
+    y: 't,d' = x.mean(dim=0) 
+    z: 'b,d' = x.mean(dim=1) 
+```
+
+`tsanley` makes smart guesses to map runtime shape values (`100`) to the shorthand (`t`). If we do not declare the dimension names using `dim_vars` in `setup_named_dims`, we get the following annotation:
+
+```python
+def foo(x):
+    y: '100,1024' = x.mean(dim=0) 
+    z: '10,1024' = x.mean(dim=1) 
+```
+
+
 ### Status: Experimental
 
-`tsanley` performs a best-effort shape tracking when the program runs. Here are a few tricky scenarios:
+`tsanley` performs a best-effort shape tracking during program execution. Here are a few tricky scenarios:
 
 - calling same function multiple times -- shape values from only the last call are cached.
 - recursive calls -- not handled.
 
-Tested with `pytorch` examples. `tensorflow` and `numpy` programs should also work (`tsalib` supported backends).
+Tested with `pytorch` examples. `tensorflow` and `numpy` programs should also work (`tsalib` supported backends), but remain to be tested.
+
+

@@ -34,7 +34,7 @@ def test():
 
 def foo(x):
     x: 'b,t,d' #shape check: ok!
-    y: 'd' = x.mean(dim=0) #error: dim should be 1
+    y: 'b,d' = x.mean(dim=0) #error: dim should be 1
     z: 'b,d' = x.mean(dim=1) #shape check: ok!
 
 def test_foo():

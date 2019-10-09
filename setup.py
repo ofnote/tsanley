@@ -20,6 +20,7 @@ setuptools.setup(name='tsanley',
       platforms=['POSIX'],
       packages=setuptools.find_packages(),
       #entry_points={},
+      scripts=['scripts/tsa'],
       classifiers=[
           'Environment :: Console',
           'Intended Audience :: Developers',
@@ -30,6 +31,7 @@ setuptools.setup(name='tsanley',
           'Topic :: Software Development',
           'Topic :: Scientific/Engineering :: Artificial Intelligence'
           ],
-      setup_requires=['sympy', 'typed_ast', 'easydict', 'astpretty', 'tsalib'],
-      install_requires=['sympy', 'typed_ast', 'easydict', 'astpretty', 'tsalib'],
+
+      setup_requires=['sympy', 'typed_ast', 'typed-astunparse', 'easydict', 'astpretty', 'tsalib'],
+      install_requires=['sympy', 'typed_ast', 'typed-astunparse', 'easydict', 'astpretty', 'tsalib'],
       )

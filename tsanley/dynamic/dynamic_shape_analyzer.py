@@ -228,6 +228,7 @@ import fnmatch
 def trace_calls(frame, event, arg):
     global GLOBALS
     TRACE_INTO = GLOBALS.trace_into
+    debug = GLOBALS.debug
 
     #print (frame, event, arg, frame.f_code.co_name)
     if event == 'call':
@@ -242,9 +243,11 @@ def trace_calls(frame, event, arg):
 
         curr_line = frame.f_lineno
         filename = co.co_filename
-        if should_filter_call(filename, func_name): return 
+        #log (f'>> call to {func_name} on line {curr_line} of {filename}')
 
-        debug_log (f'>> call to {func_name} on line {curr_line} of {filename}: {func_name}, {TRACE_INTO}')
+        if should_filter_call(filename, func_name): return 
+        #log (f'>> call to {func_name} on line {curr_line} of {filename}: {TRACE_INTO}')
+
 
         matched = False
         if len(TRACE_INTO) == 0: matched = True

@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+from ..annotate import AnnotatorConfig
+
+def main(args):
+    if args.sub_cmd == 'annotate':
+        #print (args)
+        C1 = AnnotatorConfig(fname=args.model_file, shape_log_file=args.shape_log_file)
+        C1.annotate()
+
+    else: 
+        print ('please provide a sub command: [annotate]')
+
+if __name__ == '__main__':
+    #fname = '../models/effnet.py'
+    #C1 = Config(fname='~/Projects/tsa-models/pytorch-pretrained-BERT/pytorch_pretrained_bert/modeling.py')
+    import argparse
+    parser = argparse.ArgumentParser("Tsanley CLI")
+    commands = parser.add_subparsers(title='Tsanley sub-commands', dest="sub_cmd")
+
+    annotate_parser = commands.add_parser('annotate')
+    annotate_parser.add_argument('--model_file', '-f', required=True)
+    annotate_parser.add_argument('--shape_log_file', '-s', required=False)
+    args = parser.parse_args()
+    main(args)
+
+
+# annotate model_fname --shape_log fname
