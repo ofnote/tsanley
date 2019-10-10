@@ -1,5 +1,4 @@
 # tsanley 
-![experimental](https://img.shields.io/badge/stability-experimental-orange.svg)
 
 Tsanley is a shape analyzer for tensor programs, using popular tensor libraries: `tensorflow`, `pytorch`, `numpy`. Plugs into your existing code seamlessly, with minimal changes.
 
@@ -84,7 +83,7 @@ Suppose, we have some un-annotated code residing in file `model.py`.
 
 1. First, generate *shape logs* by adding `setup_named_dims` to the `model.py`.
 2. Execute `model.py`. The logs are stored in `/tmp/shape_log.json`.
-2. Use the logs to annotate `test.py`.
+2. Use the logs to annotate `model.py`.
 
 #### Example
 Let's revisit the earlier example, without our manual annotations. Suppose it resides in `model.py`.
@@ -141,13 +140,15 @@ def foo(x):
 ```
 
 
-### Status: Experimental
+### Status: Work-In-Progress
 
-`tsanley` performs a best-effort shape tracking during program execution. Here are a few tricky scenarios:
+`tsanley` is a work in progress. It performs a best-effort shape tracking during program execution. Here are a few tricky scenarios:
 
 - calling same function multiple times -- shape values from only the last call are cached.
 - recursive calls -- not handled.
 
 Tested with `pytorch` examples. `tensorflow` and `numpy` programs should also work (`tsalib` supported backends), but remain to be tested.
+
+Try it out and open an issue if you spot a missing feature or run into problems.
 
 
