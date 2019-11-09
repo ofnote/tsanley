@@ -2,7 +2,7 @@
 
 Tsanley is a shape analyzer for tensor programs, using popular tensor libraries: `tensorflow`, `pytorch`, `numpy`. Plugs into your existing code seamlessly, with minimal changes.
 
-Builds upon the library [tsalib](https://github.com/ofnote/tsalib) for specifying, annotating and transforming tensor shapes using **named dimensions**.
+Builds upon the library [tsalib](https://github.com/ofnote/tsalib) for specifying, annotating and transforming tensor shapes using **named dimensions**. 
 
 ### Quick Start
 

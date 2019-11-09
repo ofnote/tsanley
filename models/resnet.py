@@ -160,6 +160,7 @@ class ResNet(nn.Module):
         x: 'b,512*e,h//32,w//32' = self.layer4(x)
 
         x: 'b,512*e,1,1' = self.avgpool(x)
+        
         B, Ex = get_dim_vars('b e')
         x: 'b,512*e' = x.view(B, 512*Ex)
         x: 'b,nc' = self.fc(x)
@@ -230,8 +231,9 @@ def test_basic_block():
 
 def test_resnet ():
     # declare dim vars: required for checking
+    
     B, C, Ci, Co = dim_vars('Batch(b):10 Channels(c):3 ChannelsIn(ci) ChannelsOut(co)')
-    H, W, Ex = dim_vars('Height(h):224 Width(w):224 BlockExpansion(e):1')
+    H, W, Ex, NC = dim_vars('Height(h):224 Width(w):224 BlockExpansion(e):1 NumClasses(nc):1000')
 
     rs18 = resnet18()
     x: 'bchw' = torch.ones(10, 3, 224, 224)

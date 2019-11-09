@@ -7,8 +7,13 @@ from tsalib.backend import get_backend_by_name, get_str_type
 
 
 tensor_classes = {
-    'torch': ['torch.Tensor', 'torch.nn.parameter.Parameter', 'torch.nn.modules.sparse.Embedding']
+    'torch': ['torch.Tensor', 'torch.nn.parameter.Parameter', 'torch.nn.modules.sparse.Embedding'],
+    # 'tensorflow.python.ops.resource_variable_ops.ResourceVariable'
+    'tensorflow': ['ops.resource_variable_ops.ResourceVariable', 'ops.Tensor', 'ops.EagerTensor']
 }
+
+def is_name_in_class (name, class_names):
+    return any([k in name for k in class_names])
 
 def is_tensor(x, debug):
     t = get_str_type(x)
@@ -16,7 +21,8 @@ def is_tensor(x, debug):
     if 'numpy.' in t: ret = ('numpy.ndarray' in t)
     elif 'torch.' in t: 
         ret = any([x in t for x in tensor_classes['torch']])
-    elif 'tensorflow.' in t: ret = ('ops.Tensor' in t)
+    elif 'tensorflow.' in t: 
+        ret = is_name_in_class(t, tensor_classes['tensorflow'])
     else: ret = False
 
     if debug and not ret: 
